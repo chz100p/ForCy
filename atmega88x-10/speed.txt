@@ -1,0 +1,13 @@
+
+	;time
+	
+	clk =time
+	
+	10000 0
+	{
+		++
+	} for ..
+	
+	clk time - 5000 swap / %d ",000 times/Sec\r\n" %s
+:main
+

@@ -1,0 +1,58 @@
+
+//
+//					再帰呼び出し
+//
+
+//	-----------------------------------------------------------
+
+	'\r' %c '\n' %c '\t' %c
+:%nt								//	改行 & タブ
+
+//	-----------------------------------------------------------
+
+
+	1 > { dup -- self * } if		//	階乗
+:factorial
+
+
+	dup { dup -- self + } if		//	総和
+:sum
+
+
+	dup { swap over % self } { . } ifelse
+:gcd								//	最大公約数
+
+
+	2 > { dup -- self swap 2 - self + } { . 1 } ifelse
+:fibonacci							//	フィボナッチ数列
+
+
+
+//	'(' %c _rs %d ':' %c _ds %d ')' %c		//	スタック検査
+
+
+
+%nt
+"  Recursive Call" %s				//	タイトル
+%nt %nt
+
+
+
+%nt
+"factorial(8): " %s 8 factorial %d %nt
+
+%nt
+"sum(1-100): " %s 100 sum %d %nt
+
+%nt
+"gcd(12000,20000): " %s 12000 20000 gcd %d %nt
+
+%nt
+"fibonacci(20): " %s 20 fibonacci %d %nt
+
+%nt
+
+:main
+
+
+

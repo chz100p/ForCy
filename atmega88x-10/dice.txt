@@ -1,0 +1,66 @@
+
+/*
+	‚³‚¢‚±‚ë
+*/
+
+	0xff 0x24 =sfr
+	0x0f 0x27 =sfr
+	0xfa 0x2a =sfr
+:init
+
+	0x26 sfr 4 >> ~ 3 &
+:sw
+
+	clk +
+	{
+		clk == break
+	} do .
+:wait
+
+	;scan [8]led
+
+	0 0x25 =sfr
+
+	scan ++ 7 & =scan
+	1 scan << ~
+	dup 0xf0 | 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+	-- 3 * dup @s dup 7 =led 6 =led
+	++ dup @s dup 4 =led 3 =led
+	++ @s dup 1 =led 0 =led
+:dice
+
+	;run
+
+	"\x00\x18\x00\x03\x00\xc0\x03\x18\xc0\xc3\x00\xc3\xc3\x18\xc3\xc3\xc3\xc3"
+
+	init
+	0 =scan
+
+	0 dup 5 =led 2 =led
+	1 =run
+
+	{ intclk 0 } interrupt
+
+	{
+		run
+		{
+			rand clk + 6 % ++ dice
+		} if
+
+		sw
+		{
+			1 { 1 =run } case
+			2 { 0 =run } case
+		} switch .
+
+		50 wait
+		@c? break
+	} do .
+	@c .
+:main
+

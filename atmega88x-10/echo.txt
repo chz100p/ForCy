@@ -1,0 +1,7 @@
+
+
+	{
+		@c 0x1b == break
+		%c
+	} do .
+:main

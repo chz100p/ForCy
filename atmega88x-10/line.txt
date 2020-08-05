@@ -1,0 +1,57 @@
+
+/*
+	線の移動
+*/
+
+	0xff 0x24 =sfr		// ポートB を出力
+	0x0f 0x27 =sfr		// ポートC 下位４bit を出力
+	0xfa 0x2a =sfr		// ポートD 上位４bit を出力
+:init
+
+
+	;scan [8]led
+
+	0 0x25 =sfr
+
+	scan ++ 7 & =scan
+	1 scan << ~
+	dup 0xf0 | 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+
+	init
+	0 =scan
+
+	{ intclk 0 } interrupt
+
+	0
+	{
+		dup 8 &
+		{
+			dup 7 &
+			8 0 { 0 over =led ++ } for ..
+			0xff over =led
+			7 swap - 0xff swap =led			
+		}
+		{
+			dup 7 &
+			1 over <<
+			swap 0x80 swap >> |
+			8 0 { 2 @ over =led ++ } for .. .
+		} ifelse
+
+
+		100 clk +
+		{
+			clk == break
+		} do .
+		@c? break
+
+		++
+	} do .
+	@c .
+:main
+

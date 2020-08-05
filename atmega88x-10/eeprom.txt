@@ -1,0 +1,32 @@
+
+	0x0f <=
+	{
+		'0' %c
+	} if
+	%x
+:%02x
+
+	512 0
+	{
+		dup 0x0f & !
+		{
+			0x0d0a %c '\t' %c
+		} if
+		' ' %c
+		dup ed %02x
+		++
+	} for ..
+:dump
+
+//	dump
+
+	511 0
+	{
+//		rand 8 >> clk + over =ed
+		dup dup =ed
+		++
+	} for ..
+
+	dump
+
+:main

@@ -1,0 +1,308 @@
+
+	[16]token
+	;n
+
+
+	;k
+
+	"‚±‚ê‚Í, Žš‹å‰ðÍŽŽŒ±‚Ì •¶Žš—ñ‚Å‚·B A quick brown fox jumps over the lazy dog. \x1b"
+	k @s
+	k ++ =k
+:getc
+
+
+	0x0d0a %c
+:crlf
+
+	0
+	{
+		dup token dup while
+		%c
+		++
+	} do ..
+//	crlf
+:puts
+
+	'0' >= over '9' <= nip &&
+:isdigit	//	c -- c f
+
+	isdigit
+	{
+		1 return
+	} if
+
+	dup 0xd8 & 0x40 == nip
+	{
+		dup 7 & 7 != && return
+	} if
+
+	0
+:isxdigit	//	c -- c f
+
+	0 =n
+	{
+
+		dup token isxdigit while
+		0x40 >=
+		{
+			9 +
+		} if
+		0x0f &
+		n 4 << + =n			//	n += n << 4
+		++
+	} do ..
+	n
+:atoh		//	i -- n
+
+	=n
+	n token '0' == nip n ++ token 'x' == nip &&
+	{
+		n ++ ++ atoh
+	}
+	{
+		n
+		0 =n
+		{
+			dup token isdigit while
+			'0' -
+			n 10 * + =n		//	n += n * 10
+			++
+		} do ..
+		n
+	} ifelse
+:atoi		//	i -- n
+
+
+//
+//	Lexical Analyzer
+//		lex_get:	obtain token from the input stream
+//
+	;c ;ptr ;prev ;wchar
+
+
+	ptr ++ =ptr
+:ptr++
+
+
+//
+//	part of Code Generator moved here
+//
+	;cptr ;sptr ;pv
+
+
+	pv
+
+	0xff >
+	{
+		dup 8 >> cptr =ep
+		cptr ++ =cptr
+	} if
+
+	cptr =ep
+	cptr ++ =cptr
+	=pv
+:code_out
+
+	sptr				//	direct string generation
+	{
+		code_out
+	}
+	{
+		ptr =token
+		ptr++
+	} ifelse
+:str_out
+
+
+	c '/' == swap '*' == nip ||
+	{
+		prev '/' == nip
+		{
+			0 =prev
+			++
+			c '/' == nip
+			{
+				++
+			} if
+			ptr -- =ptr
+			return
+		} if
+		c =prev
+		ptr++
+		return
+	} if
+
+	c '\'' == swap '"' == nip ||
+	{
+		ptr !
+		{
+			c =prev
+			c '"' == nip	//	direct string generation #begin
+			{
+				8 code_out		//	iSTR
+				0xff code_out
+				cptr =sptr
+			} if
+			. 3
+		} if
+		ptr++
+		return
+	} if
+
+	c 0x1b == swap 0xff == swap '\\' == nip || ||
+	{
+		0 =ptr
+		. 9
+		return
+	} if
+
+	c 0x20 <= nip
+	{
+		ptr
+		{
+			. 8
+		} if
+		return
+	} if
+
+	ptr++
+:lex_default
+
+	c '/' == nip prev '*' == nip &&
+	{
+		0
+		dup =wchar
+		nip				//	default
+	}
+	{
+		c =prev
+	} ifelse
+:lex_comment
+
+	c '\r' == swap '\n' == nip ||
+	{
+		0
+		dup =wchar
+		nip				//	default
+	} if
+:lex_comment++
+
+	c '\\' == nip
+	{
+		++
+		return
+	} if
+
+	c prev == nip
+	{
+		sptr			//	direct string generation #end
+		{
+			0 code_out		// iRET
+			cptr sptr - sptr =ep
+			0
+			dup =sptr
+			dup =ptr
+			dup =wchar
+			nip				//	default
+			return
+		} if
+		. 7
+		return
+	} if
+	c str_out
+:lex_constant
+
+	c 'x' == nip
+	{
+		++
+	}
+	{
+		"abfnrtv"
+		0
+		{
+			dup @s c == swap ! || break
+			++
+		} do
+		7 <
+		{
+			dup "\a\b\f\n\r\t\v" @s =c
+		} if .
+		c str_out
+		--
+	} ifelse
+:lex_escape
+
+	ptr++
+	++
+:lex_hex1
+
+	0 ptr ++ =token
+	ptr -- =ptr
+	ptr atoh str_out
+	. 3
+:lex_hex2
+
+	0
+	dup =prev
+	dup =ptr
+	dup =sptr
+	dup =wchar		//	multi-byte char
+
+					//	sequence
+	{
+		@c, getc
+
+		//	shift-jis
+		dup 0x80 &
+		{
+			0x81 >= over 0x9f <= nip &&
+			over 0xe0 >= swap 0xfc <= nip && ||   
+			{
+				8 << @c, getc ||
+				1 =wchar
+			} if
+		} if
+		
+		dup =c
+		ptr =token
+
+		dup
+		{
+			lex_default
+			lex_comment
+			lex_comment++
+			lex_constant
+			lex_escape
+			lex_hex1
+			lex_hex2
+		} of
+		
+		//	skip ',' comment
+		8 == ptr &&
+		{
+			ptr -- token ',' == nip
+			{
+				0
+				dup =prev
+				dup =ptr
+				dup =wchar
+				nip
+			} if
+		} if
+
+		6 > break
+	} do .
+
+	0 ptr =token
+	ptr
+
+//puts
+:lex
+
+	0 =k
+	{
+		lex while
+		
+		' ' %c puts crlf
+	} do
+:main

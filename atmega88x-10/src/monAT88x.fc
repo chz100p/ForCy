@@ -1,0 +1,149 @@
+
+//
+//				ForCy Monitor for ATmega88
+//
+//				Osamu Tamura @ Recursion Co., Ltd.
+//
+
+//	-----------------------------------------------------------
+
+
+	0x44 0xb1 =sfr	// TCCR2B
+	0x12 0xb0 =sfr	// TCCR2A
+
+	0xff 0x24 =sfr
+	0x0f 0x27 =sfr
+	0xfa 0x2a =sfr
+:port_init
+
+	0x26 sfr 4 >> ~ 3 &
+:sw
+
+	;scan [8]led
+
+	0 0x25 =sfr
+	scan ++ 7 & =scan
+
+	1 scan << ~
+	dup 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+
+	2 ep 8 << 3 ep |
+	0x600 >=					//	for ATmega88
+	{
+		. 0x100
+	} if
+	0
+	{
+		' ' %c
+		dup ep
+		dup 0xf0 & !
+		{
+			'0' %c
+		} if
+		%x
+		++
+		dup 0x0f & !
+		{
+			crlf
+			dup 0xff & !
+			{
+				crlf
+			} if
+		} if
+	} for ..
+:dump
+
+
+	0 ~ ed ~					//	read flag
+
+	//	auto run ?
+	dup 2 & sw 2 != nip &&
+	{
+		0 _epg					//	run user program
+	} if
+
+	//	reset ?
+	dup 1 &
+	{
+		dup 1 ^					//	clear reset
+		sw 2 == nip
+		{
+			2 ^					//	clear auto run
+		} if
+		~ 0 ~ =ed				//	update flag
+
+		crlf
+		crlf
+		"\t/*-- ForCy 1.00 by O.Tamura --*/" %s
+		crlf
+	} if
+	.
+
+	port_init
+
+	//	beep
+	0x8d 0xb3 =sfr	// OCR2A
+	0x12 0xb0 =sfr	// TCCR2A
+	25 clk +
+	{
+		clk == break
+	} do .
+	0 0xb0 =sfr
+
+	{ intclk 0 } interrupt
+
+	{
+		1
+		{
+			sec !=
+			{
+				. sec
+
+				//	led
+				8 0
+				{
+					0 over =led
+					++
+				} for ..
+				0x80 sec 7 & >> sec 3 >> ~ 7 & =led
+
+				'.' %c
+			} if
+			@c? break
+		} do .
+
+		@c
+		crlf
+		{
+			'#' {			//	compile mode
+				'>' %c
+				compile
+				0 dup ~ =ep	//	flush code area
+			} case
+
+			'$' {			//	auto start
+				0 ~ dup ed 0xfd & swap =ed
+				'!' %c
+			} case
+
+			'd' {			//	dump
+				dump
+			} case
+
+			'g' {			//	execute
+				0 _epg
+			} case
+			
+			0x20 >
+			{
+				dup %c '?' %c
+			} if
+		} switch .
+		crlf
+	} do
+:main

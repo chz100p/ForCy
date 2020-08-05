@@ -1,0 +1,122 @@
+//
+//				Ｎ王妃の問題（ N Queens ）
+//
+
+//	-----------------------------------------------------------
+
+
+	0xff 0x24 =sfr		// ポートB を出力
+	0x0f 0x27 =sfr		// ポートC 下位４bit を出力
+	0xfa 0x2a =sfr		// ポートD 上位４bit を出力
+:init
+
+	0x26 sfr 4 >> ~ 3 &
+:sw
+
+	;scan [8]led
+
+	0 0x25 =sfr
+
+	scan ++ 7 & =scan
+	1 scan << ~
+	dup 0xf0 | 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+
+	;n ;n- ;count [10]a [19]b [19]c [10]x		//	N <= 10
+
+
+	. '*' %c
+	{
+		1 over x << over =led
+		++
+	} n 0 for ..
+
+	sec
+	{
+		sw {
+			sw %d
+			{
+				sw ! break
+			} do
+			{
+				sw break
+			} do
+			{
+				sw ! break
+			} do
+		} if
+
+		sec != break
+	} do .
+:found								//	解の表示
+
+	{
+		{
+			dup 3 @ =x					//	x[i]	= j
+			{
+				0 over =a				//	a[j]	= 0
+				0 3 @ 2 @ + =b			//	b[i+j]	= 0
+				0 3 @ 2 @ - n- + =c		//	c[i-j+n-1]	= 0
+
+				2 @ ++ self .			//	try(i+1)
+
+				1 over =a				//	a[j]	= 1
+				1 3 @ 2 @ + =b			//	b[i+j]	= 1
+				1 3 @ 2 @ - n- + =c		//	c[i-j+n-1]	= 1
+			}
+			{
+				count ++ =count
+				count found
+			} 2 @ n- < nip ifelse
+		}
+		dup a 3 @ 2 @ + b && 3 @ 2 @ - n- + c &&
+		if
+
+		++
+	} n 0 for ..
+:try								//	競合を調べる
+
+
+	init
+	0 =scan
+	8 0
+	{
+		0 over =led
+		++
+	} for ..
+
+	{ intclk 0 } interrupt
+
+
+
+	8 =n								//	N の設定
+
+"\r\n    " %s n %d
+" Queens\r\n\r\n" %s					//	タイトル
+
+	n -- =n-
+
+//{
+	{
+		1 over =a
+		++
+	} n 0 for .. 
+
+	{
+		1 over =b
+		1 over =c
+		++
+	} n n- + 0 for .. 
+	
+	0 =count
+	0 try .
+
+	count %d
+
+//	@c? break
+//} do @c .
+:main

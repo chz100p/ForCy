@@ -1,0 +1,58 @@
+
+/*
+	パターン表示
+*/
+
+	"\x3c\x42\x81\x81\x00\x3c\x42\x42\x00\x00\x18\x24\x00\x00\x00\x18"
+//	"\xff\x81\x81\x81\x00\x7e\x42\x42\x00\x00\x3c\x24\x00\x00\x00\x18"
+//	"\xff\xff\xff\xff\x00\x7e\x7e\x7e\x00\x00\x3c\x3c\x00\x00\x00\x18"
+
+
+	0xff 0x24 =sfr
+	0x0f 0x27 =sfr
+	0xfa 0x2a =sfr
+:init
+
+	clk +
+	{
+		clk == break
+	} do .
+:wait
+
+	;scan [8]led
+
+	0 0x25 =sfr
+
+	scan ++ 7 & =scan
+	1 scan << ~
+	dup 0xf0 | 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+	2 << dup @s dup 7 =led 0 =led
+	++ dup @s dup 6 =led 1 =led
+	++ dup @s dup 5 =led 2 =led
+	++ @s dup 4 =led 3 =led
+:pattern
+
+	init
+	0 =scan
+
+	{ intclk 0 } interrupt
+
+	0
+	{
+		dup 3 &
+		over 4 &
+		{ 3 swap - } if pattern
+
+		100 wait
+		@c? break
+
+		++
+	} do .
+	@c .
+:main
+

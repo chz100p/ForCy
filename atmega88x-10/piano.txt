@@ -1,0 +1,58 @@
+
+/*
+	電子ピアノ
+*/
+
+	0xfa 0x2a =sfr	// DDRD
+	0x44 0xb1 =sfr	// TCCR2B
+:init
+
+	0x12 0xb0 =sfr	// TCCR2A
+:start				// 音出力
+
+	0 0xb0 =sfr
+:stop				// 音停止
+
+	"\x8d\x85\x7e\x76\x70\x69\x63\x5e\x59\x54\x4f\x4a\x46\x42\x3e\x3b\x37\x34"
+	@s 0xb3 =sfr	// OCR2A
+:sound				// 周期設定
+
+
+	;off ;key
+
+	init
+	start 
+
+	1 =off 
+	{
+		@c? ! continue
+
+		@c
+		'q' == break	// q で終了
+		' ' ==		// スペースで音停止
+		{
+			stop
+			1 =off
+		} if
+		=key
+
+		// キーに対応するテーブル検索
+		18 0
+		{
+			dup "awsedftgyhujkolp;'" @s key == nip
+			{
+				// 音階発生
+				dup sound
+				off
+				{
+					start
+					0 =off
+				} if
+			} if
+			++
+		} for ..	
+	} do .
+
+	stop
+:main
+ 

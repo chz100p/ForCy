@@ -1,0 +1,50 @@
+/*
+	A/D 変換の使いかた（温度計測）
+
+	I/O PORT の A0,A1,A2 に温度センサ LM35DZの GND,Vout,+Vs をつなぐ。
+
+	addr
+	0x7e	DIDR0		使用するADCビットを１
+	0x7c	ADMUX		下位３bitでADCを選択
+	0x7a	ADCSRA		クロック選択とADC起動
+	0x79	ADCH		変換データ上位
+	0x78	ADCL		変換データ下位
+*/
+
+	0xff 0x24 =sfr		// ポートB を出力にして接地（切り離し）
+	0 0x25 =sfr
+
+	0x02 0x27 =sfr		// ポートC1 のみ出力
+	0xfe 0x28 =sfr		// C1 を Hレベル、C0 以外をプルアップ
+
+	0x01 0x7e =sfr		// ADC0 を使用
+	0xc0 0x7c =sfr		// ADC0 を選択
+	0x87 0x7a =sfr		// ADC を起動
+:ADC_Init
+
+	0xc7 0x7a =sfr		// ADC 変換開始
+:ADC_Start
+
+	0x78 sfr 0x79 sfr 8 << |	// 変換結果を得る
+:ADC_Read
+
+	0 0x7a =sfr
+	0 0x7e =sfr
+:ADC_End
+
+
+	ADC_Read
+	10 div swap %d '.' %c %d "\r\n" %s
+	ADC_Start
+:intsec
+
+
+	ADC_Init
+
+	{ 0 intsec } interrupt		// １秒ごとに計測
+
+	@c .
+
+	ADC_End
+:main
+

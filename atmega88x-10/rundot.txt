@@ -1,0 +1,67 @@
+
+//
+//		点描
+//
+
+//	-----------------------------------------------------------
+
+
+	0xff 0x24 =sfr		// ポートB を出力
+	0x0f 0x27 =sfr		// ポートC 下位４bit を出力
+	0xfa 0x2a =sfr		// ポートD 上位４bit を出力
+:init
+
+	;scan [8]led
+
+	0 0x25 =sfr
+
+	scan ++ 7 & =scan
+	1 scan << ~
+	dup 0xf0 | 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+	swap 0x80 swap >> swap dup led 2 @ | swap =led .
+//	' ' %c swap %d %d
+:set
+
+	swap 0xff7f swap >> swap dup led 2 @ & swap =led .
+:reset
+
+
+	clk +		
+	{
+		clk == break
+	} do .
+:wait
+
+	;x ;y
+
+	init
+	0 =scan
+	8 0
+	{
+		0 over =led
+		++
+	} for ..
+
+	0 =x
+	0 =y
+
+	{ intclk 0 } interrupt
+
+
+	{
+		x y reset
+		rand 8 >> clk + 7 & =x
+		rand 10 >> sec + 7 & =y
+		x y set
+		200 wait
+		'^' %c
+		@c? break
+	} do .
+:main
+
+

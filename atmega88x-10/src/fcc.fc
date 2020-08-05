@@ -1,0 +1,758 @@
+
+//
+//					ForCy Compiler
+//
+
+//	-----------------------------------------------------------
+
+/*
+	System Dictionary
+*/
+
+"@s { } do for break while continue if ifelse case switch of self return interrupt . .. nip swap dup over @ = == != < > <= >= ++ -- + - * / % div << >> & | ^ ~ && || ! min max rand clk sec @c? @c %c %s %d %x sfr =sfr ep =ep ed =ed _epg _strf _rs _ds ";
+:sysdic
+
+
+//---------------------------------------------------
+//	Utility Routines
+//
+
+	[16]token
+	;n
+
+
+	0x0d0a %c
+:crlf
+
+	0
+	{
+		dup token dup while
+		%c
+		++
+	} do ..
+:puts
+
+	'0' >= over '9' <= nip &&
+:isdigit	//	c -- c f
+
+	isdigit
+	{
+		1 return
+	} if
+
+	dup 0xd8 & 0x40 == nip
+	{
+		dup 7 & 7 != && return
+	} if
+
+	0
+:isxdigit	//	c -- c f
+
+	0 =n
+	{
+
+		dup token isxdigit while
+		0x40 >=
+		{
+			9 +
+		} if
+		0x0f &
+		n 4 << + =n			//	n += n << 4
+		++
+	} do ..
+	n
+:atoh		//	i -- n
+
+	=n
+	n token '0' == nip n ++ token 'x' == nip &&
+	{
+		n ++ ++ atoh
+	}
+	{
+		n
+		0 =n
+		{
+			dup token isdigit while
+			'0' -
+			n 10 * + =n		//	n += n * 10
+			++
+		} do ..
+		n
+	} ifelse
+:atoi		//	i -- n
+
+
+//
+//	Lexical Analyzer
+//		lex_get:	obtain token from the input stream
+//
+	;c ;ptr ;prev ;wchar
+
+
+	ptr ++ =ptr
+:ptr++
+
+
+//
+//	part of Code Generator moved here
+//
+	;cptr ;sptr ;pv
+
+
+	pv
+
+	0xff >
+	{
+		dup 8 >> cptr =ep
+		cptr ++ =cptr
+	} if
+
+	cptr =ep
+	cptr ++ =cptr
+	=pv
+:code_out
+
+	sptr				//	direct string generation
+	{
+		code_out
+	}
+	{
+		ptr =token
+		ptr++
+	} ifelse
+:str_out
+
+
+	c '/' == swap '*' == nip ||
+	{
+		prev '/' == nip
+		{
+			0 =prev
+			++
+			c '/' == nip
+			{
+				++
+			} if
+			ptr -- =ptr
+			return
+		} if
+		c =prev
+		ptr++
+		return
+	} if
+
+	c '\'' == swap '"' == nip ||
+	{
+		ptr !
+		{
+			c =prev
+			c '"' == nip	//	direct string generation #begin
+			{
+				8 code_out		//	iSTR
+				0xff code_out
+				cptr =sptr
+			} if
+			. 3
+		} if
+		ptr++
+		return
+	} if
+
+	c 0x1b == swap 0xff == swap '\\' == nip || ||
+	{
+		0 =ptr
+		. 9
+		return
+	} if
+
+	c 0x20 <= nip
+	{
+		ptr
+		{
+			ptr -- token ',' == nip		//	discard comment
+			{
+				0
+				dup =prev
+				dup =ptr
+					=wchar
+			}
+			{
+				. 9
+			} ifelse
+		} if
+		return
+	} if
+
+	ptr++
+:lex_default
+
+	c '/' == nip prev '*' == nip &&
+	{
+		0
+		dup =wchar
+		nip				//	default
+	}
+	{
+		c =prev
+	} ifelse
+:lex_comment
+
+	c '\r' == swap '\n' == nip ||
+	{
+		0
+		dup =wchar
+		nip				//	default
+	} if
+:lex_comment++
+
+	c '\\' == nip
+	{
+		++
+		return
+	} if
+
+	c prev == nip
+	{
+		sptr			//	direct string generation #end
+		{
+			0 code_out		// iRET
+			cptr sptr - sptr =ep
+			0
+			dup =sptr
+			dup =ptr
+			dup =wchar
+			nip				//	default
+			return
+		} if
+		. 9
+		return
+	} if
+	c str_out
+:lex_constant
+
+	c 'x' == nip
+	{
+		++
+	}
+	{
+		"abfnrtv"
+		0
+		{
+			dup @s c == swap ! || break
+			++
+		} do
+		7 <
+		{
+			dup "\a\b\f\n\r\t\v" @s =c
+		} if .
+		c str_out
+		--
+	} ifelse
+:lex_escape
+
+	ptr++
+	++
+:lex_hex1
+
+	0 ptr ++ =token
+	ptr -- =ptr
+	ptr atoh str_out
+	. 3
+:lex_hex2
+
+	0
+	dup =prev
+	dup =ptr
+	dup =sptr
+	dup =wchar		//	multi-byte char
+
+					//	sequence
+	{
+		@c
+
+		//	shift-jis
+		dup 0x80 &
+		{
+			0x81 >= over 0x9f <= nip &&
+			over 0xe0 >= swap 0xfc <= nip && ||   
+			{
+				8 << @c ||
+				1 =wchar
+			} if
+		} if
+		
+		dup =c
+		ptr =token
+
+		dup
+		{
+			lex_default
+			lex_comment
+			lex_comment++
+			lex_constant
+			lex_escape
+			lex_hex1
+			lex_hex2
+		} of
+		
+		6 > break
+	} do .
+
+	0 ptr =token
+	ptr
+
+//puts
+:lex
+
+
+/*--------------------------------------------------
+
+Dictionary Manager
+	dic_search:	search registered key type and id from dictionary
+	dic_find:	find key type(word,variable,array, or number) & id
+	dic_add:	append new key & type to the user dictionary
+
+--------------------------------------------------*/
+
+	;syscnt ;wc ;vc ;key
+	;dic_last ;dic_uword ;dic_count
+//	[60]usrdic [16]dic_entry
+	[256]usrdic [64]dic_entry
+
+
+	//	init dictionary
+	0
+	dup =dic_last
+	dup =dic_count
+	dup =dic_uword
+	dup dup =usrdic
+	1 =usrdic
+	
+	9 =syscnt		//	iSTR_
+	sysdic
+	0
+	{
+		dup @s
+		' ' ==
+		{
+			syscnt ++ =syscnt
+		} if
+		while
+		++
+	} do .
+:dic_init
+
+
+	0
+	dup =wc
+	dup =vc
+	dup =ptr
+	dup =c
+				//	flag
+	{
+		//	match with registered tokens
+		!
+		key
+		{
+			dup token
+			ptr usrdic
+			== while
+			.
+
+			ptr++
+			++
+		} do nip
+
+		! ptr usrdic ' ' <= nip && break	//	found
+
+		!
+
+		//	skip to the end
+		{
+			ptr usrdic
+			' ' > while .
+			ptr++
+		} do
+
+		=c
+
+		//	count item type
+		c 0x0f &
+		{
+			vc ++ =vc
+		}
+		{
+			wc ++ =wc
+		} ifelse
+
+		ptr++
+		ptr usrdic while
+	} do
+	
+	//	found
+	{
+		ptr usrdic
+		0x0f & dup
+		{
+			vc
+		}
+		{
+			wc
+		} ifelse
+		swap
+		return
+	} if
+
+	0 0xff
+:dic_search_u		//	dic_type -- id type
+
+
+	dup =key
+	
+	//	search system dictionary
+	wchar !
+	{
+		sysdic _strf
+		0xff !=
+		{
+			9 +			//	_STR
+			0 return	//	found
+		} if
+	} if
+
+	.
+	key token '=' == nip
+	{
+		key ++ =key
+	} if
+
+	//	search user dictionary
+	dic_search_u
+	0 ==		//	iWRD
+	{
+		swap syscnt + swap
+	} if
+:dic_find		//	kptr -- id type
+
+
+	//	err if defined previously
+	dup dic_find
+
+	0xff != nip
+	{
+		nip nip nip	return	//	return id
+	} if
+
+	.
+	//	add key to user dictionary
+	{
+		dup token
+		dup while
+		dic_last =usrdic
+		dic_last ++ =dic_last
+		++
+	} do ..
+	dup 0x10 | dic_last =usrdic
+	dic_last ++ =dic_last
+	0 dic_last =usrdic
+
+	//	add entry address
+	{
+		0x8000 |
+	}
+	{
+		dic_uword ++ =dic_uword		//	iWRD
+	} ifelse
+	dic_count =dic_entry
+	dic_count ++ =dic_count
+
+	0xff
+:dic_add		//	offset type kptr -- id
+
+
+/*--------------------------------------------------
+
+	Code Generator
+
+--------------------------------------------------*/
+
+	;err ;i
+	;cstart ;vptr ;iptr ;len ;eq ;code2 ;data2
+//	[8]istack
+	[16]istack
+
+
+	{
+		10 {					//	iLP
+			code_out
+			cptr iptr =istack
+			iptr ++ =iptr
+			0xff code_out
+		} case
+
+		11 {					//	iRP
+			. 0 code_out			// iRET
+			iptr -- =iptr
+			iptr istack =i
+			cptr i - --
+
+			255 >
+			{
+				. 0xfc =err
+			}
+			{
+				i ++ =ep
+			} ifelse
+		} case
+
+		12 {					// iDO
+			pv !					// iRET?
+			{
+				1 =pv				// iDO_
+			} if
+			code_out
+		} case
+
+		22 {					// iSLF
+			. syscnt dic_uword + code_out
+		} case
+
+		code_out
+	} switch
+:word_out
+
+	0xff >
+	{
+		3 code_out				// iNUM2
+	}
+	{
+		0x0f >
+		{
+			2 code_out			// iNUM
+		}
+		{
+			0x90 |				// sNUM
+		} ifelse
+	} ifelse
+	code_out
+:number_out
+
+	0x0f >
+	{
+		4						// iVAR iVAR_
+		eq
+		{
+			++
+		} if code_out
+	}
+	{
+		0xa0					// sVAR sVAR_
+		eq
+		{
+			0x10 |
+		} if |
+	} ifelse
+	code_out
+:variable_out
+
+	0x0f >
+	{
+		6						// iARY iARY_
+		eq
+		{
+			++
+		} if code_out
+	}
+	{
+		0xc0					// sARY sARY_
+		eq
+		{
+			0x10 |
+		} if |
+	} ifelse
+	code_out
+:array_out
+
+
+	//	generate header
+	cptr 255 >= =code2 .
+	vptr 256 >= =data2 .
+
+	//	set header
+	0xfc 0 =token
+	0 { . 0x10 } code2 if { ++ } data2 if 1 =token 
+
+	//	set word entry table
+	cptr ++ dup
+	8 >> 4 =token
+	5 =token
+	dic_count 0
+	{
+		dup dic_entry
+		dup 0x8000 & !
+		{
+			code2
+			{
+				dup 8 >> code_out
+			} if
+			dup 0xff & code_out
+		} if .
+		++
+	} for ..
+
+	//	set data entry table
+	cptr ++ dup
+	8 >> 6 =token
+	7 =token
+	dic_count 0
+	{
+		dup dic_entry
+		dup 0x8000 &
+		{
+			data2
+			{
+				dup 8 >> 0x7f & code_out
+			} if
+			dup 0xff & code_out
+		} if .
+		++
+	} for ..
+
+	//	stack offset
+	data2
+	{
+		vptr 8 >> code_out
+	} if
+	vptr code_out
+
+	0 code_out			//	flush pv
+
+	//	total size
+	cptr dup
+	8 >> 2 =token
+	3 =token
+
+	//	generate
+	8 0
+	{
+		dup token over =ep
+//		' ' %c dup token %x
+		++
+	} for ..
+:header_out
+
+
+	//	init dictionary
+	dic_init
+
+	//	header offset
+	0xff =pv
+	7 =cptr
+	8 =cstart
+	0 =vptr
+
+	//	compile
+	0xff =err
+	0 =iptr
+	{
+		lex =len	//	lexical analyzer
+		len while
+		
+//		' ' %c puts
+
+		//	parse
+		0 token
+		{
+			':'		//	register word
+			{
+				' ' %c puts
+
+				0 code_out				// iRET
+				cstart 0 1 dic_add =err	// iWRD
+				cptr ++ =cstart		//	keep next entry
+			} case
+
+			'\''	//	constant
+			{
+				1 token number_out
+			} case
+
+			';' 	//	register variable
+			{
+				vptr 4 1 dic_add =err	//	iVAR
+				vptr ++ =vptr
+			} case
+
+			'['		//	register array
+			{
+				vptr 6					//	iARY
+				1
+				{
+					dup token ']' == nip break
+					++
+				} do
+				++
+				dic_add =err
+				1 atoi vptr + =vptr						
+			} case
+
+			//	default
+			0
+			0 token '=' == nip
+			{
+				++
+			} if =eq
+
+			0 dic_find
+			0xff ==
+			0 token isdigit nip &&
+			{
+				.. 0 atoi 2
+			} if
+
+			0xff !=
+			{
+				1 >>
+				{
+					word_out
+					number_out
+					variable_out
+					array_out
+				} of
+			}
+			{
+				.. 0xfe =err			//	err: undefined word
+			} ifelse
+
+		} switch .
+
+		err 0xff != nip break
+	} do
+
+	err 0xff == nip
+	{
+		22 =pv
+		header_out
+	}
+	{
+		crlf
+		"\terror: " %s
+		err				//	err code
+		{
+			0xfc { "{ } > 255"	} case
+			0xfe {	puts " ?"	} case
+			puts " dup"
+		} switch .
+		%s crlf
+		
+		{
+			lex while
+		} do
+	} ifelse
+
+/*
+	' ' %c '$' %c
+	dic_last %d
+	' ' %c _rs %d ':' %c _ds %d
+*/
+:compile

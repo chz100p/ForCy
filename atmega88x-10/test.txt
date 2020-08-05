@@ -1,0 +1,144 @@
+
+//
+//			ƒeƒXƒg
+//
+
+//	-----------------------------------------------------------
+
+'\r' %c '\n' %c
+:%rn
+
+
+'#' %c
+:err
+
+
+" of" %s
+%rn
+:ofof
+
+
+;i ;j ;k [10]a
+
+clk =i
+
+"\r\n\tŽŽŒ± -- A quick brown fox jumps over the lazy dog.\r\n\r\n" %s
+
+"\xff\x80\x7f\x00"
+4 0
+{
+	' ' %c
+	dup @s %d
+	++
+} for ..
+%rn
+
+
+'0'
+{
+	' ' %c
+	dup %c
+	++
+	'9' <= while
+} do
+" while" %s
+%rn
+
+
+--
+{
+	' ' %c
+	dup %c
+	--
+	'0' < break
+} do
+" break" %s
+%rn
+
+{
+	++
+	' ' %c
+	dup %c
+	'9' < continue
+	dup break
+} do
+" continue" %s
+%rn
+
+{
+	' ' %c
+	dup %c
+	++
+} ++ '0' for .
+" for" %s
+%rn
+
+{
+	" if" %s
+} '9' > if
+
+{
+	" ifelse" %s
+	%rn
+}
+{
+	err
+} '9' > ifelse
+
+{
+	{ " case" %s } '9' case
+	err
+} -- switch .
+" switch" %s
+%rn
+
+{ err err ofof err } 2 of
+
+' ' %c
+'0'
+{
+	dup %c
+	dup ++
+	'9' <= while
+} do .
+
+_ds 0
+{
+	dup 2 + @ %c
+	++
+} for ..
+
+{
+	dup %c
+	'0' == break
+	.
+} do .
+%rn
+
+
+3 0
+{
+	'/' %c rand %d
+	++
+} for ..
+%rn
+
+
+10 0
+{
+	dup =j
+	dup j =a
+	++
+} for ..
+
+10 0
+{
+	dup a '0' + %c
+	++
+} for ..
+%rn
+
+
+%rn clk i - 10 * %d " mS." %s %rn
+
+:main

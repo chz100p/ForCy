@@ -1,0 +1,82 @@
+
+//
+//				クイックソート
+//
+
+//	-----------------------------------------------------------
+	'\r' %c '\n' %c
+:%rn
+
+
+	;n ;x ;t [80]a
+
+
+	n 0
+	{
+//		0 over =a
+		dup dup 1 << ^ over =a
+//		{ dup } { n << over - } n >> < ifelse over =a
+		++
+	} for ..
+:set								//	配列の初期化
+
+	n 0
+	{
+		' ' %c
+		dup a %d
+		++
+	} for ..
+	%rn
+:show								//	配列の表示
+
+
+//	'(' %c _rs %d ':' %c _ds %d ')' %c		//	スタック検査
+
+	over over + 1 >> a =x
+	over over						//	first,last,i,j --
+	{
+		{
+			over a x < nip while
+			swap ++ swap			//	i++
+		} do
+		{
+			x over a < nip while
+			--						//	j--
+		} do
+		over <= break
+		over a =t					//	a[i] <-> a[j]
+		dup a 2 @ =a
+		t over =a
+		swap ++	swap				//	i++
+		--							//	j--
+	} do
+
+	3 @ 2 @ -- over >
+	{
+		self
+	} if ..							//	first<(i-1)
+
+	dup ++ 3 @ over >
+	{
+		self
+	} if ..							//	(j+1)<last
+	..
+:qsort
+
+
+%rn
+"	 Quick Sort" %s					//	タイトル
+%rn %rn
+
+80 =n
+
+set
+show
+%rn
+
+0 n -- qsort ..
+
+show
+:main
+
+

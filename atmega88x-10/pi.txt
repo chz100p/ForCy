@@ -1,0 +1,217 @@
+
+/*
+				‰~ü—¦i‚P‚O‚OŒ…j
+
+				Martin ‚ÌŒö®
+*/
+
+//	-----------------------------------------------------------
+
+	;n1 ;i ;m ;k ;x ;c [45]a [45]t [45]u
+
+
+	n1 0
+	{
+		0 over =t
+		++
+	} for ..
+:t=0
+
+	m i
+	{
+		0 over =u
+		++
+	} for =i .
+:u=0
+
+	n1 0
+	{
+		dup t over =a
+		++
+	} for ..
+:a=t
+
+	n1 0
+	{
+		dup t over =u
+		++
+	} for ..
+:u=t
+
+	0 =c
+	0 n1
+	{
+		--
+		dup a over t - c -
+		0x8000 >= { 0x100 + 1 } { 0 } ifelse =c
+		over =a
+	} for ..
+:a-t
+
+	0 =c
+	0 n1
+	{
+		--
+		dup a over u + c +
+		0xff > { 0xff & 1 } { 0 } ifelse =c
+		over =a
+	} for ..
+:a+u
+
+	0 =c
+	0 n1
+	{
+		--
+		dup a over u - c -
+		0x8000 >= { 0x100 + 1 } { 0 } ifelse =c
+		over =a
+	} for ..
+:a-u
+
+	0 =c
+	0 n1
+	{
+		--
+		dup a x * c +
+		0xff > { dup 0xff & swap 8 >> } { 0 } ifelse =c
+		over =a
+	} for ..
+:a*x
+
+	0 =c
+	n1 m
+	{
+		dup t c 8 << +
+		x div =c over =t
+		++
+	} for ..
+	c dup + x >= nip
+	{
+		n1
+		{
+			--
+			dup t ++ dup 2 @ =t
+			0x100 < break
+			0xff & over =t
+		} do ..
+	} if
+	m t
+	{
+		0
+	}
+	{
+		m ++ dup =m
+		n1 >= nip
+	} ifelse
+
+:t/x
+
+	0 =c
+	n1 m
+	{
+		dup u c 8 << +
+		k div =c over =u
+		++
+	} for ..
+	c dup + k >= nip
+	{
+		n1
+		{
+			--
+			dup u ++ dup 2 @ =u
+			0x100 < break
+			0xff & over =u
+		} do ..
+	} if 
+:u/k
+
+
+	'\r' %c '\n' %c
+:%n
+
+
+
+	44 =n1							//	Œ…
+
+
+	t=0
+	5 =x
+	0 =m
+	16 0 =t
+	t/x .
+	
+	25 =x
+	0 dup =i =m 1 =k
+	a=t
+	{
+		t/x break
+		
+		k 2 + =k
+
+		u=t
+		u=0
+		u/k
+
+		k 2 & { a-u } { a+u } ifelse
+		
+		'#' %c
+	} do		
+
+	%n
+//	m %d "  " %s k %d
+
+	t=0
+	239 =x
+	0 =m
+	4 0 =t
+	t/x .
+
+	0 dup =i =m 1 =k
+	a-t
+	{
+		t/x break
+		t/x break
+
+		k 2 + =k
+		
+		u=t
+		u=0
+		u/k
+
+		k 2 & { a+u } { a-u } ifelse
+
+		'$' %c
+	} do		
+
+
+
+	%n
+	%n
+	"  pi = " %s
+
+	0 a '0' + %c
+	'.' %c
+
+	100 =x
+	0 =k
+
+	n1 6 * 5 /
+	1
+	{
+		0 0 =a
+		a*x
+		0 a
+		10 <
+		{
+			'0' %c
+		} if
+		%d
+
+		k 24 ==
+//		k 49 ==
+		{ %n "         " %s . 0 } { ++ } ifelse =k
+
+		++
+	} for ..
+	%n
+:main

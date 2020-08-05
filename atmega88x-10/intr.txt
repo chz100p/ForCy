@@ -1,0 +1,19 @@
+
+	"World.\r\n" %s
+:intsec
+
+
+	{ 0 intsec } interrupt
+
+	"Hello, "
+	0
+	{
+		clk <=
+		{
+			%s
+			. clk 333 +
+		} if
+
+		@c? break
+	} do . @c .
+:main

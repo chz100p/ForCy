@@ -1,0 +1,63 @@
+
+
+	0xff 0x24 =sfr		// ポートB を出力
+	0x0f 0x27 =sfr		// ポートC 下位４bit を出力
+	0xfa 0x2a =sfr		// ポートD 上位４bit を出力
+:port_init
+
+
+	;scan [8]led
+
+	0 0x25 =sfr
+
+	scan ++ 7 & =scan
+	1 scan << ~
+	dup 0xf0 | 0x28 =sfr
+	0xf0 & 0x2b =sfr
+
+	scan led 0x25 =sfr
+:intclk
+
+
+	;k
+
+	port_init
+	0 =scan
+	0 =k
+
+	{ intclk 0 } interrupt
+
+	0
+	{
+		{
+			0 {
+				0xff 0 =led
+				8 1 { 0 k | over =led ++ } for ..
+			  } case
+			1 {
+				8 0 { 1 k | over =led ++ } for ..
+			  } case
+			2 { 
+				7 0 { 0 k | over =led ++ } for ..
+				0xff 7 =led
+			  } case
+			3 { 
+				8 0 { 0x80 k | over =led ++ } for ..
+			  } case
+		} switch
+
+//		3 == { 0x7e k - =k } if
+		3 == { rand 7 >> =k } if
+		
+
+		150 clk +
+		{
+			clk == break
+		} do .
+		@c? break
+
+		++ 3 &
+	} do .
+	@c .
+:main
+
