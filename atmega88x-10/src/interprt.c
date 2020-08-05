@@ -8,7 +8,7 @@
 //	interprt.c:	interpret forcy intermediate code
 //
 
-#include <conio.h>
+//#include <conio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -134,7 +134,7 @@ int interpreter( unsigned char *code, int stdio )
 							break;
 				case iNUM2:
 							*dp		= code[cp++]<<8;
-							*dp++	= *dp + code[cp++];
+							*dp	= *dp + code[cp++]; dp++; //*dp++	= *dp + code[cp++];
 							break;
 				case iVAR:
 							*dp++	= stack[ offset( vpt, code[cp++], data2 ) ];
@@ -144,7 +144,7 @@ int interpreter( unsigned char *code, int stdio )
 							break;
 				case iARY:
 							dp--;
-							*dp++	= stack[ offset( vpt, code[cp++], data2 ) + *dp ];
+							*dp	= stack[ offset( vpt, code[cp++], data2 ) + *dp ]; dp++; //*dp++	= stack[ offset( vpt, code[cp++], data2 ) + *dp ];
 							break;
 				case iARY_:
 							t	= *--dp;
@@ -157,7 +157,7 @@ int interpreter( unsigned char *code, int stdio )
 							break;
 				case iSTR_:
 							dp--;
-							*dp++	= code[ strp + *dp ];
+							*dp	= code[ strp + *dp ]; dp++; //*dp++	= code[ strp + *dp ];
 							break;
 
 				case iLP:
@@ -231,53 +231,53 @@ int interpreter( unsigned char *code, int stdio )
 
 				case iDRP:	dp--;						break;
 				case i2DRP:	dp	-= 2;					break;
-				case iNIP:	*(dp-1)	= *--dp;			break;
+				case iNIP:	--dp; *(dp-1)	= *dp;			break;
 				case iSWP:
 							dp-=2;
 							t	= *dp;
-							*dp++	= *(dp+1);
+							*dp	= *(dp+1); dp++; //*dp++	= *(dp+1);
 							*dp++	= t;
 							break;
-				case iDUP:	*dp++	= *(dp-1);			break;
-				case iOVR:	*dp++	= *(dp-2);			break;
+				case iDUP:	*dp	= *(dp-1); dp++; /* *dp++	= *(dp-1); */			break;
+				case iOVR:	*dp	= *(dp-2); dp++; /* *dp++	= *(dp-2); */			break;
 				case iPICK:
 							t		= *--dp + 1;
-							*dp++	= *(dp-t);
+							*dp	= *(dp-t); dp++; //*dp++	= *(dp-t);
 							break;
 				case iPOKE:
 							t		= *--dp + 1;
-							*(dp-t)	= *--dp;
+							--dp; *(dp-t)	= *dp;
 							break;
 
-				case iEQU:	dp--;	*dp++	= *(dp-1)==*dp? 1:0;	break;
-				case iNEQ:	dp--;	*dp++	= *(dp-1)!=*dp? 1:0;	break;
-				case iLT:	dp--;	*dp++	= *(dp-1)<*dp? 1:0;		break;
-				case iGT:	dp--;	*dp++	= *(dp-1)>*dp? 1:0;		break;
-				case iLE:	dp--;	*dp++	= *(dp-1)<=*dp? 1:0;	break;
-				case iGE:	dp--;	*dp++	= *(dp-1)>=*dp? 1:0;	break;
+				case iEQU:	dp--;	*dp	= *(dp-1)==*dp? 1:0; dp++;	break;
+				case iNEQ:	dp--;	*dp	= *(dp-1)!=*dp? 1:0; dp++;	break;
+				case iLT:	dp--;	*dp	= *(dp-1)<*dp? 1:0; dp++;		break;
+				case iGT:	dp--;	*dp	= *(dp-1)>*dp? 1:0; dp++;		break;
+				case iLE:	dp--;	*dp	= *(dp-1)<=*dp? 1:0; dp++;	break;
+				case iGE:	dp--;	*dp	= *(dp-1)>=*dp? 1:0; dp++;	break;
 
-				case iINC:	dp--;	*dp++	= *dp + 1;				break;
-				case iDEC:	dp--;	*dp++	= *dp - 1;				break;
+				case iINC:	dp--;	*dp	= *dp + 1; dp++;				break;
+				case iDEC:	dp--;	*dp	= *dp - 1; dp++;				break;
 
-				case iADD:	dp-=2;	*dp++	= *dp + *(dp+1);		break;
-				case iSUB:	dp-=2;	*dp++	= *dp - *(dp+1);		break;
-				case iMUL:	dp-=2;	*dp++	= *dp * *(dp+1);		break;
-				case iDIV:	dp-=2;	*dp++	= *dp / *(dp+1);		break;
-				case iMOD:	dp-=2;	*dp++	= *dp % *(dp+1);		break;
+				case iADD:	dp-=2;	*dp	= *dp + *(dp+1); dp++;		break;
+				case iSUB:	dp-=2;	*dp	= *dp - *(dp+1); dp++;		break;
+				case iMUL:	dp-=2;	*dp	= *dp * *(dp+1); dp++;		break;
+				case iDIV:	dp-=2;	*dp	= *dp / *(dp+1); dp++;		break;
+				case iMOD:	dp-=2;	*dp	= *dp % *(dp+1); dp++;		break;
 				case iDVMD:	dp-=2;	t		= *dp % *(dp+1);
-									*dp++	= *dp / *(dp+1);
+									*dp	= *dp / *(dp+1); dp++;
 									*dp++	= t;					break;
 
-				case iLSFT:	dp-=2;	*dp++	= *dp << *(dp+1);		break;
-				case iRSFT:	dp-=2;	*dp++	= *dp >> *(dp+1);		break;
+				case iLSFT:	dp-=2;	*dp	= *dp << *(dp+1); dp++;		break;
+				case iRSFT:	dp-=2;	*dp	= *dp >> *(dp+1); dp++;		break;
 
-				case iAND:	dp-=2;	*dp++	= *dp & *(dp+1);		break;
+				case iAND:	dp-=2;	*dp	= *dp & *(dp+1); dp++;		break;
 				case iOR:
-				case iLOR:	dp-=2;	*dp++	= *dp | *(dp+1);		break;
-				case iXOR:	dp-=2;	*dp++	= *dp ^ *(dp+1);		break;
-				case iCMP:	dp--;	*dp++	= ~*dp;					break;
-				case iLAND:	dp-=2;	*dp++	= (*dp && *(dp+1))? 1:0;	break;
-				case iNOT:	dp--;	*dp++	= *dp? 0:1;				break;
+				case iLOR:	dp-=2;	*dp	= *dp | *(dp+1); dp++;		break;
+				case iXOR:	dp-=2;	*dp	= *dp ^ *(dp+1); dp++;		break;
+				case iCMP:	dp--;	*dp	= ~*dp; dp++;					break;
+				case iLAND:	dp-=2;	*dp	= (*dp && *(dp+1))? 1:0; dp++;	break;
+				case iNOT:	dp--;	*dp	= *dp? 0:1; dp++;				break;
 				case iMIN:	dp--;	if( *dp<*(dp-1) )
 										*(dp-1)	= *dp;
 									break;
@@ -334,7 +334,7 @@ int interpreter( unsigned char *code, int stdio )
 							break;
 
 				case iSFR:
-							*dp++	= stack[ *--dp ];		//	provisional
+				  			--dp; *dp	= stack[ *dp ]; dp++;		//	provisional
 							break;
 				case iSFR_:
 							t	= *--dp;					//	provisional
@@ -343,7 +343,7 @@ int interpreter( unsigned char *code, int stdio )
 
 				case iEP:
 							dp--;
-							*dp++	= (unsigned short)progmem[ *dp ];
+							*dp	= (unsigned short)progmem[ *dp ]; dp++;
 							break;
 				case iEP_:
 							t	= *--dp;
@@ -353,7 +353,7 @@ int interpreter( unsigned char *code, int stdio )
 							break;
 				case iED:
 							dp--;
-							*dp++	= (unsigned short)datamem[ *dp ];
+							*dp	= (unsigned short)datamem[ *dp ]; dp++;
 							break;
 
 				case iED_:
@@ -391,7 +391,7 @@ int interpreter( unsigned char *code, int stdio )
 							*dp++	= (unsigned short)( MEM_SIZE - ( rp - stack ) );
 							break;
 				case iDS:
-							*dp++	= (unsigned short)( dp - stack - bp );
+							*dp	= (unsigned short)( dp - stack - bp ); dp++;
 							break;
 
 			}
@@ -424,7 +424,7 @@ int interpreter( unsigned char *code, int stdio )
 							break;
 				case sARY:
 							dp--;
-							*dp++	= stack[ offset( vpt, j, data2 ) + *dp ];
+							*dp	= stack[ offset( vpt, j, data2 ) + *dp ]; dp++;
 							break;
 				case sARY_:
 							t	= *--dp;

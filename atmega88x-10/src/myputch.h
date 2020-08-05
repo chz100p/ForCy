@@ -1,0 +1,2 @@
+
+int myputch(int c);

@@ -1,6 +1,6 @@
 
 //
-//			ƒeƒXƒg
+//			ãƒ†ã‚¹ãƒˆ
 //
 
 //	-----------------------------------------------------------
@@ -22,7 +22,7 @@
 
 clk =i
 
-"\r\n\tŽŽŒ± -- A quick brown fox jumps over the lazy dog.\r\n\r\n" %s
+"\r\n\tè©¦é¨“ -- A quick brown fox jumps over the lazy dog.\r\n\r\n" %s
 
 "\xff\x80\x7f\x00"
 4 0

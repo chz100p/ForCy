@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <io.h>
+//#include <io.h>
 #include "forcy.h"
 
 
@@ -86,7 +86,7 @@ int main( int argc, char *argv[] )
 		if( !size )
 			return 3;
 
-		_setmode( _fileno( stdout ), _O_BINARY );
+		//_setmode( _fileno( stdout ), _O_BINARY );
 
 		size	= (size_t)interpreter( code, stdio );
 

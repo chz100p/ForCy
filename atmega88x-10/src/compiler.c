@@ -9,7 +9,7 @@
 //
 
 #include <ctype.h>
-#include <mbctype.h>
+//#include <mbctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "forcy.h"
@@ -398,8 +398,41 @@ static unsigned short lex_get( unsigned short *token, FILE *fp )
 		if( c==EOF || c==0x1b )
 			break;
 
-		if( _ismbblead(c) )
-			c	= (c << 8) | getc( fp );
+		//if( _ismbblead(c) )
+		//	c	= (c << 8) | getc( fp );
+		//////
+		// UTF-8
+		if((c&0x80)==0x00){
+		}else if((c&0xe0)==0xc0){
+		  int c1;
+		  c1 = getc( fp );
+		  if((c1&0xc0)!=0x80)
+		    break;
+		  c = ((c&0x1f)<<6)|(c1&0x3f);
+		}else if((c&0xf0)==0xe0){
+		  int c1,c2;
+		  c1 = getc( fp );
+		  if((c1&0xc0)!=0x80)
+		    break;
+		  c2 = getc( fp );
+		  if((c2&0xc0)!=0x80)
+		    break;
+		  c = ((c&0x0f)<<12)|((c1&0x3f)<<6)|(c2&0x3f);
+		}else if((c&0xf8)==0xf0){
+		  int c1,c2,c3;
+		  c1 = getc( fp );
+		  if((c1&0xc0)!=0x80)
+		    break;
+		  c2 = getc( fp );
+		  if((c2&0xc0)!=0x80)
+		    break;
+		  c3 = getc( fp );
+		  if((c3&0xc0)!=0x80)
+		    break;
+		  c = ((c&0x07)<<18)|((c1&0x3f)<<12)|((c2&0x3f)<<6)|(c3&0x3f);
+		}else{
+		  break;
+		}
 
 		lint_char( c );
 
@@ -483,7 +516,7 @@ static unsigned short lex_get( unsigned short *token, FILE *fp )
 			case 6:		//	hex2
 					*(ptr+1)	= 0;
 					ptr--;
-					*ptr++	= _atoh( ptr );
+					*ptr	= _atoh( ptr ); ptr++; //*ptr++	= _atoh( ptr );
 					state	= 3;
 					break;
 		
