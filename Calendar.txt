@@ -1,0 +1,210 @@
+//var t = new Date();
+//var count = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+//var offset = new Date(t.getFullYear(), t.getMonth(), 1).getDay();
+//var body = "";
+//for (var i = 0; i < offset; i++) {
+//    body += "   ";
+//}
+//for (var i = 1; i <= count; i++) {
+//    body += (" " + i).slice(-2);
+//    body += ((i + offset) % 7 == 0) ? "\n" : " ";
+//}
+//console.log(body);
+
+10 %c
+:lf
+
+13 %c
+:cr
+
+0x23 %c
+1 _ds
+{
+32 %c dup @ %d
+--
+} for ..
+cr lf
+:_ds_dump
+
+100 %
+dup 10 /
+dup
+{
+0x30 + %c
+}
+{
+. 32 %c
+} ifelse
+10 % 0x30 + %c
+:%2d
+
+dup 10 % swap 10 /
+dup 10 % swap 10 /
+dup 10 % swap 10 /
+10 %
+dup { . 0xfff0 1 @ { 0xfff0 1 = 2 @ { 0xfff0 2 = } ! if } ! if } ! if
+0x30 + %c
+0x30 + %c
+0x30 + %c
+0x30 + %c
+:%4d
+
+dup 12 >> %x
+dup 8 >> 15 & %x
+dup 4 >> 15 & %x
+15 & %x
+:%04x
+
+swap %04x %04x
+:dw%08x
+
+16 <
+{
+2 @ over << 2 @ 16 3 @ - >> |
+}
+{
+over over 16 - <<
+} ifelse
+2 =
+<<
+:dw<<
+
+16 <
+{
+over over >> 3 @ 16 3 @ - << |
+}
+{
+2 @ over 16 - >>
+} ifelse
+1 =
+2 @ over >> 2 =
+.
+:dw>>
+
+2 @ over +
+over <
+//dup { . 1 } if
+5 @ +
+3 @ +
+4 =
+2 =
+..
+:dw+
+
+// dwa0 dwa1 dw~
+~
+over ~
+1 =
+:dw~
+
+// dwa0 dwa1 dw++
+0 1 dw+
+:dw++
+
+// dwa0 dwa1 dwb0 dwb1 dw-
+//dw~ dw++ dw+
+2 @ over -
+3 @ >
+~ ++
+5 @ +
+3 @ -
+4 =
+2 =
+..
+:dw-
+
+// dwa0 dwa1 dwb0 dwb1 dw-+
+dup 3 @ -
+over >
+~ ++
+3 @ +
+5 @ -
+4 =
+2 =
+..
+:dw-+
+
+// dwa0 dwa1 dw--
+0 1 dw-
+:dw--
+
+// dwa0 dwa1 dwb0 dwb1 dw*
+0 0
+32 0
+{
+5 @ 5 @ 2 @ dw>> 1 &
+{
+8 @ 8 @ 3 @ dw<< 6 @ 6 @ dw+ 4 = 4 =
+} if .
+++
+} for ..
+3 = 3 =
+..
+:dw*
+
+// Y M D GetDays
+over 2 <=
+{
+3 @ -- 3 =
+2 @ 12 + 2 =
+} if .
+0 3 @ -- 0 365 dw*
+4 @ 100 /
+5 @ 2 >> over - over 2 >> +
+0 1 =
+dw+
+0 4 @ 979 * 1033 - 5 >>
+dw+
+0 3 @
+dw+
+dw--
+2 = 2 = .
+:GetDays
+
+// Y M D GetDayOfWeek
+//—j“ú “ú Œ ‰Î … –Ø ‹à “y 
+//h    0  1  2  3  4  5  6 
+over 2 <=
+{
+3 @ -- 3 =
+2 @ 12 + 2 =
+} if .
+swap 1 + 26 * 10 / +
+swap dup 100 % dup 4 / +
+swap 100 / dup 4 /
+swap 5 * + + +
+-- //
+7 %
+:GetDayOfWeek
+
+// Y M Calendar
+"====== " %s over %4d " " %s dup %2d " =====" %s cr lf
+over over 1 GetDayOfWeek
+2 @ 2 @ ++ 1 GetDays
+4 @ 4 @ 0 GetDays
+dw- nip
+over 0 {
+"   " %s
+++
+} for ..
+1 {
+dup %2d
+dup 3 @ + 7 %
+{
+32 %c
+}
+{
+cr lf
+} ifelse
+++
+} for .
+cr lf
+//_ds_dump
+.. ..
+:Calendar
+
+// 13 1 { 2015 over Calendar ++ } for ..
+13 1 { 2016 over Calendar ++ } for ..
+// 1000 0 { dup %4d 10 + } for ..
+_ds_dump
+:main

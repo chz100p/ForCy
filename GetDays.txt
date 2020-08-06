@@ -1,0 +1,316 @@
+// http://ufcpp.net/study/algorithm/o_days.html
+
+/// <summary>
+/// グレゴリウス暦1年1月1日からの経過日数を求める。
+/// （グレゴリウス暦施行前の日付も、
+///   形式的にグレゴリウス暦と同じルールで計算。）
+/// </summary>
+/// <param name="y">年</param>
+/// <param name="m">月</param>
+/// <param name="d">日</param>
+/// <returns>1年1月1日からの経過日数</returns>
+//static int GetDays(int y, int m, int d)
+//{
+//  // 1・2月 → 前年の13・14月
+//  if (m <= 2)
+//  {
+//    --y;
+//    m += 12;
+//  }
+//  int dy = 365 * (y - 1); // 経過年数×365日
+//  int c = y / 100;
+//  int dl = (y >> 2) - c + (c >> 2); // うるう年分
+//  int dm = (m * 979 - 1033) >> 5; // 1月1日から m 月1日までの日数
+//  return dy + dl + dm + d - 1;
+//}
+
+10 %c
+:lf
+
+13 %c
+:cr
+
+0x23 %c
+1 _ds
+{
+32 %c dup @ %d
+--
+} for ..
+cr lf
+:_ds_dump
+
+dup 12 >> %x
+dup 8 >> 15 & %x
+dup 4 >> 15 & %x
+15 & %x
+:%04x
+
+swap %04x %04x
+:dw%08x
+
+16 <
+{
+2 @ over << 2 @ 16 3 @ - >> |
+}
+{
+over over 16 - <<
+} ifelse
+2 =
+<<
+:dw<<
+
+16 <
+{
+over over >> 3 @ 16 3 @ - << |
+}
+{
+2 @ over 16 - >>
+} ifelse
+1 =
+2 @ over >> 2 =
+.
+:dw>>
+
+2 @ over +
+over <
+//dup { . 1 } if
+5 @ +
+3 @ +
+4 =
+2 =
+..
+:dw+
+
+~
+over ~
+1 =
+:dw~
+
+0 1 dw+
+:dw++
+
+//dw~ dw++ dw+
+2 @ over - //_ds_dump
+3 @ > //_ds_dump
+~ ++ //_ds_dump
+5 @ + //_ds_dump
+3 @ - //_ds_dump
+4 = //_ds_dump
+2 = //_ds_dump
+.. //_ds_dump
+:dw-
+
+dup 3 @ - //_ds_dump
+over > //_ds_dump
+~ ++ //_ds_dump
+3 @ + //_ds_dump
+5 @ - //_ds_dump
+4 = //_ds_dump
+2 = //_ds_dump
+.. //_ds_dump
+:dw-+
+
+0 1 dw-
+:dw--
+
+0 0
+32 0
+{
+5 @ 5 @ 2 @ dw>> 1 &
+{
+8 @ 8 @ 3 @ dw<< 6 @ 6 @ dw+ 4 = 4 =
+} if .
+++
+} for ..
+3 = 3 =
+..
+:dw*
+
+//_ds_dump
+3 @ 2 @ >
+{
+. .. 1
+}
+{
+.
+2 @ 1 @ >
+2 = ..
+} ifelse
+//_ds_dump
+:dw>
+
+over over |
+{
+over
+{
+0 2 @
+{ //_ds_dump
+dup 1 << < while
+1 <<
+over ++ 1 =
+} do
+.
+}
+{
+0 over
+{ //_ds_dump
+dup 1 << < while
+1 <<
+over ++ 1 =
+} do
+.
+16 +
+} ifelse _ds_dump
+0xffff swap { _ds_dump
+3 @ 3 @ 2 @ dw<<
+7 @ 7 @ dw>
+{
+..
+}
+{
+7 @ 7 @ dw-+
+5 = 5 =
+} ifelse
+--
+} for ..
+..
+}
+{
+.. .. 0xffff 0xffff // error 0 div
+} ifelse
+:dw%
+
+over over |
+{
+0 0
+3 @
+{
+0 4 @
+{ //_ds_dump
+dup 1 << < while
+1 <<
+over ++ 1 =
+} do
+.
+}
+{
+0 3 @
+{ //_ds_dump
+dup 1 << < while
+1 <<
+over ++ 1 =
+} do
+.
+16 +
+} ifelse
+0xffff swap { //_ds_dump
+5 @ 5 @ 2 @ dw<<
+9 @ 9 @ dw>
+{
+..
+}
+{
+9 @ 9 @ dw-+
+7 = 7 =
+0 1 2 @ dw<<
+5 @ 5 @ dw+
+3 = 3 =
+} ifelse
+--
+} for .. //_ds_dump
+3 = 3 =
+..
+}
+{
+.. .. 0xffff 0xffff // error 0 div
+} ifelse
+:dw/
+
+over 2 <=
+{
+2 @ 1 - 2 =
+over 12 + 1 =
+} if .
+swap 979 * 1033 - 5 >>
++
+swap
+dup 100 /
+dup 2 >> swap -
+swap dup 2 >>
+swap 1 - 365 *
++ + + 1 -
+:xGetDays
+
+over 2 <=
+{
+3 @ -- 3 =
+2 @ 12 + 2 =
+} if .
+//  int dy = 365 * (y - 1); // 経過年数×365日
+//  int c = y / 100;
+//  int dl = (y >> 2) - c + (c >> 2); // うるう年分
+//  int dm = (m * 979 - 1033) >> 5; // 1月1日から m 月1日までの日数
+//  return dy + dl + dm + d - 1;
+0 3 @ -- 0 365 dw*
+4 @ 100 /
+5 @ 2 >> over - over 2 >> +
+0 1 =
+dw+
+0 4 @ 979 * 1033 - 5 >>
+dw+
+0 3 @
+dw+
+dw--
+2 = 2 = .
+:GetDays
+
+//2015 3 3 GetDays
+//%d
+0x8888 0x8888 0x8888 0x8888 dw+
+dw%08x cr lf
+1 2 3 4 dw+ 3 4 dw-
+dw%08x cr lf
+1 2 3 4 dw+ 3 4 dw- dw--
+dw%08x cr lf
+32 0 {
+0xaaaa 0x5555 2 @ dw<<
+dw%08x " " %s
+++
+} for ..
+cr lf
+32 0 {
+0xaaaa 0x5555 2 @ dw>>
+dw%08x " " %s
+++
+} for ..
+cr lf
+0x404 0x202 0 0x101 dw*
+dw%08x cr lf
+//10 1 {
+//10 1 {
+//32 %c
+////dup 3 @ * %d
+////0 over 0 5 @ dw* dw%08x
+////dup 0 0 5 @ dw* dw%08x
+//0 over 4 @ 0 dw* dw%08x
+//++
+//} for ..
+//cr lf
+//++
+//} for ..
+:xmain
+
+1 2 3 4 _ds_dump .. ..
+1 2 3 4 dw+ dw%08x cr lf
+4 6 3 4 dw- dw%08x cr lf
+3 4 1 2 dw/ dw%08x cr lf
+//3 4 0 2 dw/ dw%08x cr lf
+//1 2 3 4 dw> %d cr lf
+//3 4 1 2 dw> %d cr lf
+:xxmain
+
+2015 1 1 GetDays dw%08x cr lf
+2015 3 12 GetDays dw%08x cr lf
+2015 12 31 GetDays dw%08x cr lf
+_ds_dump
+:main

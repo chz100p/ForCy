@@ -1,0 +1,20 @@
+// http://ja.wikipedia.org/wiki/%E3%83%84%E3%82%A7%E3%83%A9%E3%83%BC%E3%81%AE%E5%85%AC%E5%BC%8F
+//// http://ufcpp.net/study/algorithm/o_days.html
+
+//—j“ú “ú Œ ‰Î … –Ø ‹à “y 
+//h     1  2  3  4  5  6  0 
+over 2 <=
+{
+3 @ -- 3 =
+2 @ 12 + 2 =
+} if .
+swap 1 + 26 * 10 / +
+swap dup 100 % dup 4 / +
+swap 100 / dup 4 /
+swap 5 * + + +
+7 %
+:GetDayOfWeek
+
+2015 3 2 GetDayOfWeek
+%d
+:main
