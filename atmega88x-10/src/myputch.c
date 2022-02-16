@@ -1,4 +1,6 @@
 
+#include <unistd.h>
+
 int myputch(int c)
 {
   int ret;

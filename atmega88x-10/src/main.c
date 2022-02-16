@@ -69,7 +69,7 @@ int main( int argc, char *argv[] )
 				fclose( fp );
 			}
 
-			fprintf( stderr, "\n compiled: %d byte.\n", size );
+			fprintf( stderr, "\n compiled: %zu byte.\n", size );
 		}
 	}
 #endif
@@ -91,7 +91,7 @@ int main( int argc, char *argv[] )
 		size	= (size_t)interpreter( code, stdio );
 
 		if( size )
-			fprintf( stderr, "\n	stack %d level used.\n", size );
+			fprintf( stderr, "\n	stack %zu level used.\n", size );
 #if 1
 		//	progmem
 		if( stdmem && epsiz ) {
@@ -101,7 +101,7 @@ int main( int argc, char *argv[] )
 				fclose( fp );
 			}
 
-			fprintf( stderr, "\n compiled: %d byte.\n", epsiz );
+			fprintf( stderr, "\n compiled: %zu byte.\n", epsiz );
 		}
 #endif
 	}
